@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="id">
+<head>
+ <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+ <meta name="theme-color" content="#123328"><title>CrownTrace | Inspeksi riset</title>
+ <link rel="stylesheet" href="/survey.css"><link rel="stylesheet" href="/inspection.css">
+ <script defer src="/inspection.js"></script>
+</head>
+<body>
+ <header><div class="header-wrap"><a class="identity" href="/survei"><span>CrownTrace</span></a>
+ <nav aria-label="Modus analisis"><a href="/survei">Peta kebun</a><a href="/">Foto tunggal</a><a href="/inspeksi" aria-current="page">Inspeksi riset</a></nav>
+ <span class="engine" id="state" role="status">Memeriksa model</span></div></header>
+ <main>
+  <div class="page-head"><div><span class="eyebrow">PENYARINGAN KONDISI · PILOT</span>
+  <h1>Inspeksi kandidat pohon</h1><p>Tinjau indikasi visual dari tile RGB dengan model yang diuji terhadap label survei Ganoderma V2.</p></div>
+  <button id="example" class="secondary" disabled>Contoh perbedaan mode</button></div>
+  <p class="notice"><strong>Ruang lingkup:</strong> kotak kandidat inspeksi, bukan diagnosis penyakit, mask mahkota, atau koordinat GPS. Pohon tanpa tanda belum tentu sehat. Gunakan citra 640 × 640 dengan skala sebanding data studi.</p>
+  <div class="inspect-layout">
+   <aside class="panel"><h2>1. Pilih citra</h2>
+    <label class="file-picker" for="tile"><strong id="filename">Pilih tile RGB</strong><small>JPEG/PNG · 640 × 640 · maks 5 MiB</small></label>
+    <input type="file" class="visually-hidden" id="tile" accept="image/jpeg,image/png">
+    <h2>2. Pilih ambang</h2>
+    <fieldset class="modes"><legend class="visually-hidden">Mode inspeksi</legend>
+     <label><input type="radio" name="mode" value="balanced" checked><span><strong>Balanced</strong><small>Lebih sedikit peringatan keliru · precision 90,0%, recall 59,0%</small></span></label>
+     <label><input type="radio" name="mode" value="high_recall"><span><strong>High Recall</strong><small>Menemukan lebih banyak referensi positif · precision 76,1%, recall 83,6%</small></span></label>
+    </fieldset>
+    <small class="note">Angka di atas berasal dari holdout Ganoderma V2 yang telah digunakan ulang, bukan jaminan kinerja pada foto baru.</small>
+    <button type="button" id="inspect" class="primary" disabled>Jalankan pemeriksaan</button>
+    <p id="message" role="status" aria-live="polite"></p>
+    <section id="exports" hidden><h2>3. Ekspor hasil</h2><div class="export-links"><button id="csv">CSV</button><button id="json">JSON</button></div><small>Skor model dan posisi dalam piksel.</small></section>
+   </aside>
+   <section class="panel inspect-view" aria-label="Hasil inspeksi">
+    <div class="viewbar"><div><h2 id="viewname">Tile belum dipilih</h2><p id="viewmeta">Hasil akan muncul setelah pemeriksaan.</p></div>
+     <label><input type="checkbox" id="only" disabled> Hanya kandidat</label></div>
+    <dl class="inspect-metrics" id="counts"><div><dt>Pohon terdeteksi</dt><dd id="total">—</dd></div><div><dt>Kandidat inspeksi</dt><dd id="candidates">—</dd></div><div><dt>Tidak ditandai</dt><dd id="notflagged">—</dd></div></dl>
+    <div class="canvas" id="canvas"><p id="empty">Pilih tile atau gunakan citra uji.</p><img id="image" alt="Citra RGB yang diperiksa" hidden><svg id="boxes" viewBox="0 0 640 640" aria-label="Kotak hasil model" hidden></svg></div>
+    <div class="legend"><span><i class="pink"></i> Kandidat inspeksi</span><span><i class="green"></i> Tidak ditandai</span><span>Posisi piksel · tidak georeferensi</span></div>
+    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Status</th><th>Skor detektor</th><th>Skor inspeksi</th><th>Pusat (px)</th></tr></thead><tbody id="records"></tbody></table></div>
+   </section>
+  </div>
+ </main>
+</body>
+</html>

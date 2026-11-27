@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CrownTrace | Lab segmentasi</title>
+  <link rel="stylesheet" href="/segmentation.css"><script src="/segmentation.js" defer></script>
+</head>
+<body>
+  <header><div class="header"><a class="brand" href="/segmentasi"><span>CT</span> CrownTrace <small>Research Lab</small></a><nav aria-label="Modus analisis"><a href="/segmentasi" aria-current="page">Uji segmentasi</a><a href="/survei">Peta kebun</a><a href="/">Hitung foto</a><a href="/inspeksi">Inspeksi</a></nav><span id="state" role="status">Memeriksa model…</span></div></header>
+  <main>
+    <div class="intro"><div><p class="eyebrow">INSTANCE SEGMENTATION / LOCAL RESEARCH</p><h1>Analisis setiap mahkota.</h1><p>Unggah foto udara, jalankan model CrownTrace, lalu bandingkan citra dengan hasil segmentasi individu pohon.</p></div><a class="secondary" href="/survei">Peta orthomosaic →</a></div>
+    <div class="notice"><strong>Gunakan sumber yang sesuai.</strong> Foto JPEG/PNG dianalisis satu per satu dalam koordinat piksel, bukan dijahit menjadi peta. Untuk peta geografis, unggah orthomosaic GeoTIFF melalui Peta kebun. Label kondisi visual bukan diagnosis.</div>
+    <section class="layout">
+      <aside class="card controls">
+        <h2>01 <span>Siapkan data</span></h2>
+        <label class="drop" id="drop" for="files"><span class="upload-icon">↑</span><b>Pilih atau seret gambar</b><small>JPEG/PNG · maks. 30 per batch · 12 MiB/gambar</small></label>
+        <input type="file" id="files" accept="image/jpeg,image/png,.jpg,.jpeg,.png" multiple>
+        <p id="selection">Belum ada gambar dipilih.</p>
+        <label for="profile">Profil model</label><select id="profile"><option value="auto" selected>Otomatis · paket uji folder 01/02/07</option><option value="mopad">MOPAD · Mahkota pilot + kategori visual</option><option value="mopad_hr">MOPAD · Resolusi tinggi</option><option value="roboflow_prompt">CrownPrompt Detail · Trees v3</option><option value="roboflow_fast">CrownPrompt Fast · Trees v3</option></select>
+        <p id="profile-note" class="muted">Otomatis mencocokkan berkas asli folder 01/02/07 berdasarkan hash. Foto lain perlu profil manual.</p>
+        <button id="run" class="primary" disabled>Mulai segmentasi</button>
+        <progress id="progress" value="0" max="1" hidden></progress><p id="message" role="status" aria-live="polite"></p>
+        <button id="batchcsv" class="secondary" disabled>Unduh rekap batch CSV</button>
+        <button id="batchmap" class="secondary" disabled>Buka / buat peta gabungan</button>
+        <p class="muted">Hasil tersimpan lokal dalam folder <code>analyses/segmentation</code>. Hitungan batch bukan jumlah unik perkebunan jika foto bertumpang tindih.</p>
+      </aside>
+      <section class="card viewer" aria-label="Hasil segmentasi">
+        <div class="viewhead"><div><h2>02 <span>Hasil segmentasi</span></h2><p id="active-name">Pilih gambar untuk melihat hasil.</p></div><div class="toggle"><button id="original" disabled aria-pressed="false">Asli</button><button id="overlay" disabled aria-pressed="true">Mask</button></div></div>
+        <div class="canvas"><div id="empty"><div class="empty-icon">◇</div><h3>Belum ada analisis</h3><p>Pratinjau mask mahkota akan muncul di sini.</p></div><img id="preview" alt="Citra dan mask hasil segmentasi" hidden></div>
+        <div class="metrics"><div><small>Pohon terdeteksi</small><strong id="trees">—</strong></div><div><small>Mask mahkota</small><strong id="crowns">—</strong></div><div><small>Waktu inferensi</small><strong id="elapsed">—</strong></div></div>
+        <p id="reference" class="muted"></p><div id="counts" class="counts"></div><div id="exports" class="exports" hidden><a id="download-overlay" download="overlay.png">Overlay PNG</a><a id="download-coco">Mask COCO JSON</a><a id="download-csv">Data pohon CSV</a><a id="download-summary">Ringkasan JSON</a></div>
+      </section>
+    </section>
+    <section class="card queue" id="batch-panel" hidden><div class="viewhead"><div><h2>03 <span>Peta gabungan batch</span></h2><p id="batch-note" role="status"></p></div><span id="batch-mode"></span></div><div class="batch-tools"><label><input type="checkbox" id="layer-original" checked> Citra asli</label><label><input type="checkbox" id="layer-crowns" checked> Mahkota</label><label><input type="checkbox" id="layer-points" checked> Titik pohon</label><label><input type="checkbox" id="layer-coverage"> Batas foto</label><label>Zoom <input id="batch-zoom" type="range" min="100" max="350" value="100"></label></div><div class="batch-viewport"><div id="batch-canvas" class="batch-canvas"><img id="batch-original" alt="Citra gabungan"><img id="batch-crowns" alt="Layer mask"><img id="batch-points" alt="Layer titik"><img id="batch-coverage" alt="Layer batas foto" hidden></div></div><div class="metrics" id="batch-metrics"><div><small>Foto</small><strong id="batch-images">—</strong></div><div><small>Deteksi sebelum gabungan</small><strong id="batch-raw">—</strong></div><div><small id="batch-count-label">Kandidat ditampilkan</small><strong id="batch-count">—</strong></div></div><div class="exports"><a id="batch-report" download="batch-summary.json">Ringkasan gabungan</a><a id="batch-download-base" download="mosaic.jpg">Citra gabungan JPG</a><a id="batch-download-mask" download="crowns.png">Layer mask PNG</a></div></section>
+    <section class="card queue"><div class="viewhead"><div><h2>04 <span>Antrean & hasil</span></h2><p>Klik baris yang selesai untuk melihat mask dan ekspor gambar tersebut.</p></div><span id="total">0 gambar</span></div><div class="tablewrap"><table><thead><tr><th>Nama file</th><th>Status</th><th>Pohon</th><th>Referensi</th><th>Mahkota</th><th>Waktu</th><th>Hasil</th></tr></thead><tbody id="rows"><tr><td colspan="7" class="placeholder">Belum ada gambar dalam antrean.</td></tr></tbody></table></div></section>
+  </main>
+</body></html>

@@ -1,0 +1,56 @@
+# Local Python, tests and editors
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.vscode/
+.idea/
+*.log
+
+# Secrets, operational data, uploads, sessions and payment records
+.env
+.env.*
+*.pem
+*.key
+*.sqlite*
+*.db
+portal_workspace/
+/analyses/
+
+# Source datasets and model checkpoints remain local until rights are verified.
+/data/*
+!/data/README_DATASET.md
+!/data/README.md
+*.pth
+*.pt
+*.ckpt
+*.onnx
+*.safetensors
+*.zip
+*.tar
+*.gz
+*.7z
+*.pdf
+*.tif
+*.tiff
+*.gpkg
+*.jpg
+*.jpeg
+*.png
+*.webp
+# Preserve the portal's original brand SVG and licensed font files in source.
+/research/references/
+/research/history/
+
+# Keep research reports and selected aggregate evaluation results only.
+/results/**
+!/results/**/
+!/results/**/*.md
+!/results/rebuild_20261124/tile_boundary/summary.json
+!/results/iteration_20261126/inventory_qa/summary.json
+!/results/iteration_20261126/final_evaluation/summary.json
+!/results/iteration_20261126/fast_evaluation/summary.json
+!/results/portal_final_20261126/integration.json

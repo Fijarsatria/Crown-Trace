@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123328">
+  <title>CrownTrace | Peta kebun</title>
+  <link rel="stylesheet" href="/survey.css">
+  <script src="/survey.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Ke ruang kerja</a>
+  <header>
+    <div class="header-wrap">
+      <a class="identity" href="/survei">
+        <svg width="35" height="35" viewBox="0 0 35 35" aria-hidden="true"><rect width="35" height="35" rx="9" fill="#c8f192"/><path d="M17.5 26v-9.5 M17.5 18C18 11 22.5 9 27 9c-1 5-3.5 9-9.5 9z M17.5 21C17 15 12 13 8.5 13c1 4.5 4 8 9 8z" fill="none" stroke="#18372b" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>CrownTrace</span>
+      </a>
+      <nav aria-label="Modus analisis">
+        <a href="/survei" aria-current="page">Peta kebun</a>
+        <a href="/">Ruang kerja utama</a>
+        <a href="/lab-teknis">Uji profil</a>
+        <a href="/inspeksi">Inspeksi riset</a>
+      </nav>
+      <span id="engine" class="engine" role="status">Memeriksa model</span>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="page-head">
+      <div>
+        <h1>Peta kebun</h1>
+        <p>Petakan pohon dari orthomosaic drone dan lihat rekap per blok.</p>
+      </div>
+      <button id="demo" class="secondary" type="button" disabled>Lihat contoh MOPAD</button>
+    </div>
+
+    <dl id="metrics" class="metrics" hidden>
+      <div><dt>Pohon terdeteksi</dt><dd id="metric-trees">–</dd></div>
+      <div><dt>Mahkota dipetakan</dt><dd id="metric-crowns">–</dd></div>
+      <div><dt>Area tercakup</dt><dd id="metric-area">–</dd></div>
+      <div><dt>Petak diproses</dt><dd id="metric-tiles">–</dd></div>
+    </dl>
+
+    <div class="layout">
+      <aside>
+        <form class="panel" id="upload-form">
+          <h2>Analisis baru</h2>
+          <label class="file-picker" for="raster">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m-5 5 5-5 5 5M4 15v5h16v-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <strong id="file-name">Pilih GeoTIFF</strong>
+            <small>Orthomosaic RGB berkoordinat</small>
+          </label>
+          <input class="visually-hidden" id="raster" type="file" accept=".tif,.tiff" required>
+          <details>
+            <summary>Tambahkan batas blok</summary>
+            <label for="blocks">GeoJSON poligon dalam WGS84</label>
+            <input id="blocks" type="file" accept=".geojson,.json">
+          </details>
+          <label class="option"><input id="segment" type="checkbox"> Perkirakan bentuk mahkota (uji coba)</label>
+          <button id="start" class="primary" type="submit" disabled>Petakan kebun</button>
+        </form>
+        <section class="panel" id="layers" hidden>
+          <h2>Layer peta</h2>
+          <div id="layer-views" class="layer-views" role="group" aria-label="Tampilan layer" hidden>
+            <button type="button" data-view="inventory" aria-pressed="true">Inventaris</button>
+            <button type="button" data-view="density" aria-pressed="false">Kepadatan</button>
+            <button type="button" data-view="review" aria-pressed="false">Inspeksi</button>
+          </div>
+          <div class="layer-list">
+            <label class="option"><input id="layer-base" type="checkbox" checked><i class="marker imagery"></i> Citra drone</label>
+            <label class="option"><input id="layer-trees" type="checkbox" checked><i class="marker tree"></i> Titik pohon</label>
+            <label class="option"><input id="layer-crowns" type="checkbox" checked><i class="marker crown"></i> Bentuk mahkota (uji coba)</label>
+            <label class="option"><input id="layer-review" type="checkbox"><i class="marker review"></i> Kandidat inspeksi <output id="review-count"></output></label>
+            <label class="option"><input id="layer-blocks" type="checkbox" checked><i class="marker block"></i> Batas blok</label>
+            <label class="option"><input id="layer-grid" type="checkbox"><i class="marker grid"></i> Grid analisis</label>
+            <label class="option"><input id="layer-density" type="checkbox"><i class="marker density"></i> Kepadatan pohon</label>
+            <label class="option"><input id="layer-coverage" type="checkbox" checked><i class="marker missing"></i> Petak cakupan parsial <output id="coverage-count"></output></label>
+            <label class="option" hidden><input id="layer-photos" type="checkbox" checked><i class="marker block"></i> Jejak foto <output id="photo-count"></output></label>
+          </div>
+          <p id="review-note" class="panel-note" hidden>Menandai prediksi menguning dan indikasi mati untuk diperiksa di lapangan.</p>
+          <p id="coverage-note" class="panel-note" hidden>Oranye menandai petak yang memiliki area tanpa data.</p>
+          <div id="density-legend" hidden><div class="density-ramp"></div><div class="density-labels"><span>0</span><span id="density-max"></span></div><p class="panel-note">Pohon per hektare yang tercakup</p></div>
+        </section>
+        <section class="panel" id="appearance-panel" hidden>
+          <h2>Kondisi visual</h2>
+          <p class="panel-note">Perkiraan visual dari citra RGB. Konfirmasi pohon yang terindikasi bermasalah di lapangan.</p>
+          <dl class="appearance-counts" id="appearance-counts"></dl>
+          <label for="appearance-filter">Tampilkan di peta</label>
+          <select id="appearance-filter"><option value="">Semua kategori</option></select>
+        </section>
+        <section class="panel" id="exports" hidden>
+          <h2>Unduh hasil</h2>
+          <div id="export-links" class="export-links"></div>
+        </section>
+      </aside>
+
+      <section class="map-card" aria-label="Peta hasil">
+        <div class="map-head">
+          <div><h2 id="map-title">Orthomosaic</h2><p id="map-meta">Peta berkoordinat dari gabungan foto drone.</p><p id="model-versions" hidden></p></div>
+          <div class="map-tools" id="tools" hidden>
+            <button id="zoom-out" aria-label="Perkecil peta" type="button">−</button>
+            <button id="fit" type="button">Pas ke layar</button>
+            <button id="zoom-in" aria-label="Perbesar peta" type="button">+</button>
+          </div>
+        </div>
+        <div class="viewport" id="viewport">
+          <canvas id="canvas" tabindex="0" aria-label="Peta pohon. Gunakan plus dan minus untuk memperbesar, dan tombol panah untuk bergerak." hidden></canvas>
+          <div class="map-empty" id="empty">
+            <svg width="42" height="42" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M4 8l8-3.5 8 3.5 8-3.5V24l-8 3.5-8-3.5-8 3.5V8zM12 5v19m8-16v19" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            <strong>Peta akan tampil di sini</strong>
+            <span>Pilih GeoTIFF atau buka contoh MOPAD.</span>
+          </div>
+        </div>
+        <div class="map-footer" id="map-footer" hidden>
+          <span id="selection" role="status">Klik pohon atau petak untuk melihat detail.</span>
+        </div>
+        <section id="status-panel" class="job-status" hidden>
+          <p id="status" role="status"></p>
+          <progress id="progress" max="100" aria-describedby="status" hidden></progress>
+        </section>
+      </section>
+
+      <section class="panel block-panel" id="recap" hidden>
+        <h2>Rekap blok</h2>
+        <p id="recap-scope"></p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr id="block-head"><th scope="col">Blok</th><th scope="col">Pohon</th><th scope="col">Tercakup (ha)</th><th scope="col">Cakupan</th><th scope="col">Pohon / ha terpetakan</th></tr></thead>
+            <tbody id="block-rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

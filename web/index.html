@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171e19">
+  <title>CrownTrace | Hitung pohon dari foto drone</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a href="#workspace" class="skip-link">Ke ruang kerja</a>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true"><span></span></span>
+        <strong>CrownTrace</strong>
+      </div>
+      <div id="model-state" class="model-state" role="status">Memeriksa model</div>
+    </div>
+  </header>
+  <main id="workspace" tabindex="-1">
+    <div class="intro">
+      <div class="intro-copy">
+        <h1>Hitung pohon sawit</h1>
+        <p>Tandai dan hitung pohon dari foto drone.</p>
+      </div>
+      <div class="sample-actions">
+        <a class="button" href="/segmentasi">Uji segmentasi</a>
+        <a class="button" href="/survei">Peta kebun</a>
+        <a class="button" href="/inspeksi">Inspeksi riset</a>
+        <button id="sample" type="button" class="secondary" disabled><span class="play-icon" aria-hidden="true"></span>Uji foto MOPAD</button>
+        <button id="demo" type="button">Contoh peta</button>
+      </div>
+    </div>
+
+    <div class="workspace">
+      <aside class="inspector" aria-label="Unggah dan ringkasan hasil">
+        <form id="analysis-form" class="panel upload-panel">
+          <h2>Foto drone</h2>
+          <label class="upload" id="upload-zone" for="image-file">
+            <span class="upload-icon" aria-hidden="true">↑</span>
+            <strong id="file-caption">Pilih atau seret foto</strong>
+            <small id="file-help">JPG, PNG, GeoTIFF · Maks. 45 MiB</small>
+          </label>
+          <input type="file" id="image-file" aria-describedby="file-help file-error" accept=".jpg,.jpeg,.png,.tif,.tiff">
+          <p id="file-error" class="file-error" role="status"></p>
+          <button id="run" class="primary" type="submit" disabled>Hitung pohon</button>
+          <details class="analysis-settings">
+            <summary>Cara memeriksa foto</summary>
+            <label class="sr-only" for="method">Cara memeriksa foto</label>
+            <select id="method">
+              <option value="full_640">Foto utuh · cepat</option>
+              <option value="full_1024" selected>Foto utuh · lebih detail</option>
+              <option value="adaptive">Periksa potongan terpilih</option>
+              <option value="exhaustive">Periksa semua potongan</option>
+              <option id="method-review" value="selective" hidden disabled>Periksa ulang foto sulit (uji coba)</option>
+            </select>
+          </details>
+        </form>
+
+        <section class="panel report-panel" aria-labelledby="report-title">
+          <h2 id="report-title">Ringkasan hasil</h2>
+          <div class="counts" id="counts"></div>
+          <details class="advanced" id="advanced-filters" hidden>
+            <summary>Filter tampilan</summary>
+            <div id="classes" aria-label="Kategori yang ditampilkan"></div>
+            <label class="range-label" for="score">Tampilkan skor di atas <output id="score-label" for="score">0%</output></label>
+            <input id="score" type="range" min="0" max="100" value="0" step="1" aria-describedby="score-help" disabled>
+            <p id="score-help">Skor menunjukkan seberapa yakin model pada satu kotak. Filter ini menyembunyikan kotak berskor rendah dari layar.</p>
+            <button id="reset-filters" class="subtle" type="button" disabled>Kembalikan filter</button>
+          </details>
+          <div class="exports">
+            <div class="export-buttons">
+              <a id="csv" class="button" hidden>Unduh CSV</a>
+              <a id="geojson" class="button" hidden>Unduh GeoJSON</a>
+              <span id="exports-empty">Ekspor tersedia setelah foto diperiksa.</span>
+            </div>
+            <p id="export-help" hidden>Ekspor berisi semua hasil pemeriksaan.</p>
+          </div>
+        </section>
+      </aside>
+
+      <section class="viewer" id="viewer" aria-label="Foto dan peta hasil">
+        <div class="view-header">
+          <div class="view-heading">
+            <h2 id="view-title">Penampil foto</h2>
+            <p id="view-meta">Foto dan kotak deteksi tampil di sini.</p>
+          </div>
+          <div class="tabs" aria-label="Mode tampilan">
+            <button type="button" id="tab-image" aria-pressed="true" aria-controls="image-panel">Foto</button>
+            <button type="button" id="tab-map" aria-pressed="false" aria-controls="map-panel">Peta</button>
+          </div>
+        </div>
+        <p id="notice" role="status" aria-live="polite"></p>
+        <div class="viewport image-panel" id="image-panel">
+          <div class="photo-canvas" id="photo-canvas" tabindex="0" aria-label="Area foto, gulir saat diperbesar" hidden>
+            <div class="photo-stage" id="photo-stage">
+              <img id="photo" alt="Foto drone yang diproses">
+              <svg id="overlay" role="group" aria-label="Kotak deteksi pohon"></svg>
+            </div>
+          </div>
+          <div id="photo-empty" class="image-empty">
+            <div>
+              <h3>Dari foto udara ke hitungan pohon</h3>
+              <p>Pilih foto drone atau coba satu foto dari MOPAD.</p>
+              <span class="image-credit">Citra udara · MOPAD Site 2</span>
+            </div>
+          </div>
+        </div>
+        <div class="viewport map-panel" id="map-panel" hidden>
+          <div id="map-empty" class="placeholder">
+            <div>
+              <h3>Peta lokasi pohon</h3>
+              <p>Gunakan GeoTIFF berkoordinat atau buka contoh peta.</p>
+            </div>
+          </div>
+          <svg id="map" viewBox="0 0 800 460" role="group" aria-label="Peta koordinat WGS84" hidden></svg>
+        </div>
+        <div class="view-footer">
+          <div class="view-detail">
+            <p id="selection" role="status">Pilih kotak atau titik untuk melihat detail.</p>
+            <div class="view-meta"><span id="visible-count"></span><span id="map-caption"></span></div>
+          </div>
+          <div id="view-tools" class="view-tools" hidden>
+            <button type="button" id="zoom-out" aria-label="Perkecil tampilan">−</button>
+            <button type="button" id="zoom-reset" aria-label="Kembalikan skala tampilan">100%</button>
+            <button type="button" id="zoom-in" aria-label="Perbesar tampilan">+</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

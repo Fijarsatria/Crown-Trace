@@ -1,0 +1,8 @@
+# Pemodelan pembanding pada lingkungan GPU (opsional)
+# Jangan pasang pada .venv produksi yang sudah berjalan.
+# Pilih versi torch/torchvision yang kompatibel dengan CUDA mesin; contoh pasangan stabil:
+torch==2.6.0
+torchvision==0.21.0
+ultralytics==8.3.100
+numpy
+pillow
